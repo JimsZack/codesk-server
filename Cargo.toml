@@ -25,6 +25,8 @@ path = "src/utils.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+# Force vendored OpenSSL for reliable cross-compilation (no system OpenSSL needed)
+openssl = { version = "0.10", features = ["vendored"] }
 hbb_common = { path = "libs/hbb_common" }
 serde_derive = "1.0"
 serde = "1.0"
