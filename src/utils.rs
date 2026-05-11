@@ -10,11 +10,11 @@ use std::{
 fn print_help() {
     println!(
         "Usage:
-    rustdesk-utils [command]\n
+    codesk-utils [command]\n
 Available Commands:
     genkeypair                                   Generate a new keypair
     validatekeypair [public key] [secret key]    Validate an existing keypair
-    doctor [rustdesk-server]                     Check for server connection problems"
+    doctor [codesk-server]                     Check for server connection problems"
     );
     process::exit(0x0001);
 }
@@ -110,11 +110,11 @@ fn doctor_ip(server_ip_address: std::net::IpAddr, server_address: Option<&str>) 
 
     // port check TCP (UDP is hard to check)
     doctor_tcp(server_ip_address, "21114", "API");
-    doctor_tcp(server_ip_address, "21115", "hbbs extra port for nat test");
-    doctor_tcp(server_ip_address, "21116", "hbbs");
-    doctor_tcp(server_ip_address, "21117", "hbbr tcp");
-    doctor_tcp(server_ip_address, "21118", "hbbs websocket");
-    doctor_tcp(server_ip_address, "21119", "hbbr websocket");
+    doctor_tcp(server_ip_address, "58887", "codesk-ids extra port for nat test");
+    doctor_tcp(server_ip_address, "58888", "codesk-ids");
+    doctor_tcp(server_ip_address, "58889", "codesk-relay tcp");
+    doctor_tcp(server_ip_address, "58890", "codesk-ids websocket");
+    doctor_tcp(server_ip_address, "58891", "codesk-relay websocket");
 
     // TODO: key check
 }
@@ -161,7 +161,7 @@ fn main() {
         }
         "doctor" => {
             if args.len() <= 2 {
-                error_then_help("You must supply the rustdesk-server address");
+                error_then_help("You must supply the codesk-server address");
             }
             doctor(args[2].as_str());
         }

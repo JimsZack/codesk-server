@@ -200,6 +200,9 @@ pub fn check_software_update() {
 
 #[tokio::main(flavor = "current_thread")]
 async fn check_software_update_() -> hbb_common::ResultType<()> {
+    // CoDesk-Server: software update check disabled
+    return Ok(());
+    #[allow(unreachable_code)]
     let (request, url) = hbb_common::version_check_request(hbb_common::VER_TYPE_RUSTDESK_SERVER.to_string());
     let latest_release_response = reqwest::Client::builder().build()?
         .post(url)
