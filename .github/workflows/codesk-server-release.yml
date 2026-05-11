@@ -1,0 +1,124 @@
+name: CoDesk-Server Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag (e.g. v1.1.15)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-amd64:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libssl-dev pkg-config \
+            protobuf-compiler libprotobuf-dev
+
+      - name: Build codesk-ids and codesk-relay
+        run: |
+          cargo build --release --bin codesk-ids --bin codesk-relay
+          ls -lh target/release/codesk-ids target/release/codesk-relay
+
+      - name: Package binaries
+        run: |
+          VERSION="${{ github.ref_name }}"
+          [ -z "$VERSION" ] && VERSION="${{ github.event.inputs.version }}"
+          tar -czf codesk-server-${VERSION}-linux-amd64.tar.gz \
+            -C target/release codesk-ids codesk-relay
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Create Release and upload
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: "CoDesk-Server ${{ env.VERSION }}"
+          body: |
+            ## CoDesk-Server ${{ env.VERSION }}
+
+            ### Binaries
+            - `codesk-ids` — ID/Rendezvous server (port 58888 TCP/UDP, 58890 WebSocket)
+            - `codesk-relay` — Relay server (port 58889 TCP, 58891 WebSocket)
+
+            ### Quick Start
+            ```bash
+            # Extract
+            tar -xzf codesk-server-${{ env.VERSION }}-linux-amd64.tar.gz
+
+            # Run ID server
+            ./codesk-ids -k your_key
+
+            # Run Relay server (on same or different machine)
+            ./codesk-relay -k your_key
+            ```
+
+            ### Client Configuration
+            Set your client to use:
+            - ID Server: `your-server-ip`
+            - Relay Server: `your-server-ip`
+            - Password: your_key
+          files: |
+            codesk-server-*-linux-amd64.tar.gz
+          draft: false
+          prerelease: false
+
+  build-linux-arm64:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cross-compilation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Install Rust + arm64 target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.75"
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y libssl-dev pkg-config protobuf-compiler
+
+      - name: Build for arm64
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+          PKG_CONFIG_ALLOW_CROSS: 1
+        run: |
+          cargo build --release --target aarch64-unknown-linux-gnu \
+            --bin codesk-ids --bin codesk-relay
+          ls -lh target/aarch64-unknown-linux-gnu/release/codesk-ids \
+                 target/aarch64-unknown-linux-gnu/release/codesk-relay
+
+      - name: Package binaries
+        run: |
+          VERSION="${{ github.ref_name }}"
+          [ -z "$VERSION" ] && VERSION="${{ github.event.inputs.version }}"
+          tar -czf codesk-server-${VERSION}-linux-arm64.tar.gz \
+            -C target/aarch64-unknown-linux-gnu/release codesk-ids codesk-relay
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.VERSION }}
+          files: |
+            codesk-server-*-linux-arm64.tar.gz
