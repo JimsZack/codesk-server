@@ -6,6 +6,10 @@ edition = "2021"
 build = "build.rs"
 default-run = "codesk-ids"
 
+[lib]
+name = "hbbs"
+path = "src/lib.rs"
+
 [[bin]]
 name = "codesk-ids"
 path = "src/main.rs"
